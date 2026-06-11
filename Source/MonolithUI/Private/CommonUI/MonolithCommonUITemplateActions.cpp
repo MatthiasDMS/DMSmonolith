@@ -69,6 +69,7 @@
 // Package + save plumbing.
 #include "UObject/Package.h"
 #include "UObject/SavePackage.h"
+#include "UObject/UnrealType.h"
 
 // Tokenforge plugin probe (Phase 2 Item #10 pattern). Projects module already
 // listed in MonolithUI.Build.cs PrivateDependencyModuleNames.
@@ -823,10 +824,17 @@ namespace MonolithCommonUITemplate
         // Phase 1.5 allowlist makes requires_hold settable without raw_mode;
         // we apply it directly via SetRequiresHold (same call configure_common_button
         // uses at MonolithCommonUIButtonActions.cpp:249).
-        if (QuitButton)
-        {
-            QuitButton->SetRequiresHold(true);
-        }
+		if (QuitButton)
+		{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+			if (FBoolProperty* RequiresHoldProp = CastField<FBoolProperty>(QuitButton->GetClass()->FindPropertyByName(TEXT("bRequiresHold"))))
+			{
+				RequiresHoldProp->SetPropertyValue_InContainer(QuitButton, true);
+			}
+#else
+			QuitButton->SetRequiresHold(true);
+#endif
+		}
 
         // ----- 4. Bound action bar --------------------------------------------
         FString ActionBarButtonPath;

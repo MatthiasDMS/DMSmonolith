@@ -22,7 +22,7 @@
 #include "IAssetTools.h"
 #include "IMeshMergeUtilities.h"
 #include "MeshMergeModule.h"
-#include "MeshMerge/MeshMergingSettings.h"
+#include "Engine/MeshMerging.h"
 #include "WorldPartition/HLOD/HLODLayer.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"

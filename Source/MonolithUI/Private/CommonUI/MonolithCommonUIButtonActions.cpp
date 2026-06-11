@@ -32,6 +32,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/ARFilter.h"
 #include "UObject/SavePackage.h"
+#include "UObject/UnrealType.h"
 
 // Phase G: route style-asset creation through the dedup service.
 #include "Style/MonolithUIStyleService.h"
@@ -246,7 +247,14 @@ namespace MonolithCommonUIButton
 		}
 		if (Params->TryGetBoolField(TEXT("requires_hold"), Bv))
 		{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+			if (FBoolProperty* RequiresHoldProp = CastField<FBoolProperty>(Btn->GetClass()->FindPropertyByName(TEXT("bRequiresHold"))))
+			{
+				RequiresHoldProp->SetPropertyValue_InContainer(Btn, Bv);
+			}
+#else
 			Btn->SetRequiresHold(Bv);
+#endif
 			Applied.Add(TEXT("requires_hold"));
 		}
 
@@ -263,8 +271,12 @@ namespace MonolithCommonUIButton
 		const bool bHasMaxH = Params->TryGetNumberField(TEXT("max_height"), MaxH);
 		if (bHasMaxW || bHasMaxH)
 		{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+			return FMonolithActionResult::Error(TEXT("CommonUI max dimensions are not supported by UE 5.4 UCommonButtonBase"));
+#else
 			Btn->SetMaxDimensions(MaxW, MaxH);
 			Applied.Add(TEXT("max_dimensions"));
+#endif
 		}
 
 		FString ClickMethodStr;
@@ -510,7 +522,9 @@ namespace MonolithCommonUIButton
 
 			ChildWidget->Modify();
 			ChildWidget->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty);
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 			Wbp->OnVariableRemoved(ChildWidgetName);
+#endif
 		}
 
 		Parent->RemoveChild(OldBtn);

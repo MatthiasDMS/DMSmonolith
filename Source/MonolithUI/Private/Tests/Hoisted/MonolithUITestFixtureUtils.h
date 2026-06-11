@@ -68,7 +68,9 @@ namespace MonolithUI::TestUtils
         }
 
         Tree->RootWidget = nullptr;
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
         WBP->WidgetVariableNameToGuidMap.Empty();
+#endif
     }
 
     /**

@@ -147,7 +147,12 @@ EBTNodeResult::Type UBTTask_TryActivateAbility::ExecuteTask(UBehaviorTreeCompone
 		// AbilityTags is deprecated since 5.5 in favor of GetAssetTags().
 		for (const FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
 		{
-			if (Spec.Ability && Spec.Ability->GetAssetTags().HasAll(AbilityTags))
+			if (Spec.Ability
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+				&& Spec.Ability->AbilityTags.HasAll(AbilityTags))
+#else
+				&& Spec.Ability->GetAssetTags().HasAll(AbilityTags))
+#endif
 			{
 				TargetSpec = const_cast<FGameplayAbilitySpec*>(&Spec);
 				break;
@@ -251,7 +256,11 @@ void UBTTask_TryActivateAbility::HandleAbilityEnded(
 		else if (!AbilityTags.IsEmpty())
 		{
 			// UE 5.5+: AbilityTags is deprecated — use GetAssetTags().
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+			bIsOurs = Ended->AbilityTags.HasAll(AbilityTags);
+#else
 			bIsOurs = Ended->GetAssetTags().HasAll(AbilityTags);
+#endif
 		}
 	}
 

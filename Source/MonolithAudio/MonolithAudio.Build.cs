@@ -40,6 +40,11 @@ public class MonolithAudio : ModuleRules
 				bHasMetaSound = true;
 		}
 
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			bHasMetaSound = false;
+		}
+
 		PublicDefinitions.Add("WITH_METASOUND=" + (bHasMetaSound ? "1" : "0"));
 
 		if (bHasMetaSound)

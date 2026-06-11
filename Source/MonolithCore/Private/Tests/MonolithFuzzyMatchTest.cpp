@@ -318,8 +318,8 @@ bool FMonolithFuzzyMatchLockReleaseHandoverTest::RunTest(const FString& /*Parame
 	};
 
 	const double Start = FPlatformTime::Seconds();
-	TFuture<void> F1 = Async(EAsyncExecution::Thread, KnownWorker);
-	TFuture<void> F2 = Async(EAsyncExecution::Thread, UnknownWorker);
+	TFuture<void> F1 = Async(EAsyncExecution::Thread, MoveTemp(KnownWorker));
+	TFuture<void> F2 = Async(EAsyncExecution::Thread, MoveTemp(UnknownWorker));
 
 	// 5s timeout. If WaitFor returns false, we conclude deadlock.
 	const FTimespan Timeout = FTimespan::FromSeconds(5.0);

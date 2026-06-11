@@ -247,6 +247,9 @@ namespace MonolithUI
 
     void RegisterVariableName(UWidgetBlueprint* WBP, const FName& VariableName)
     {
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+        return;
+#else
         if (!WBP || VariableName.IsNone())
         {
             return;
@@ -256,6 +259,7 @@ namespace MonolithUI
         {
             WBP->OnVariableAdded(VariableName);
         }
+#endif
     }
 
     void RegisterCreatedWidget(UWidgetBlueprint* WBP, UWidget* Widget)
@@ -269,6 +273,9 @@ namespace MonolithUI
 
     void ReconcileWidgetVariableGuids(UWidgetBlueprint* WBP)
     {
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+        return;
+#else
         if (!WBP)
         {
             return;
@@ -309,6 +316,7 @@ namespace MonolithUI
         {
             WBP->OnVariableRemoved(RemovedVariableName);
         }
+#endif
     }
 
     // -------------------------------------------------------------------------

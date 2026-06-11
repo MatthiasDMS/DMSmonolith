@@ -410,6 +410,6 @@ FString FAnimationIndexer::NotifiesToJson(const TArray<FAnimNotifyEvent>& Notifi
 
 	FString Result;
 	auto Writer = TJsonWriterFactory<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>::Create(&Result);
-	FJsonSerializer::Serialize(NotifyArr, *Writer);
+	FJsonSerializer::Serialize(NotifyArr, *Writer, true);
 	return Result;
 }

@@ -457,7 +457,7 @@ FMonolithActionResult FMonolithMeshAccessibilityActions::AnalyzeVisualContrast(c
 		FHitResult LOSHit;
 		QueryParams.AddIgnoredActor(Actor);
 		bool bBlocked = World->LineTraceSingleByChannel(LOSHit, Origin, ActorLoc, ECC_Visibility, QueryParams);
-		QueryParams.ClearIgnoredSourceObjects();
+		QueryParams.ClearIgnoredActors();
 
 		if (bBlocked && LOSHit.Distance < Distance - 50.0f)
 		{
@@ -929,7 +929,7 @@ FMonolithActionResult FMonolithMeshAccessibilityActions::ValidateInteractiveReac
 				FHitResult LOSHit;
 				QueryParams.AddIgnoredActor(Actor);
 				bool bBlocked = World->LineTraceSingleByChannel(LOSHit, EyePos, ActorLoc, ECC_Visibility, QueryParams);
-				QueryParams.ClearIgnoredSourceObjects();
+				QueryParams.ClearIgnoredActors();
 				Item.bLineOfSight = !bBlocked;
 			}
 		}

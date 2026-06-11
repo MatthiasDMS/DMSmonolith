@@ -102,12 +102,11 @@ namespace MonolithUI::AnimationInternal
 
         WBP->Animations.Add(NewAnim);
 
-        // Register in WidgetVariableNameToGuidMap so the WBP compiler's validation pass
-        // (WidgetBlueprintCompiler.cpp:805) finds the entry. Use deterministic GUID
-        // matching the compiler's own pattern.
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
         WBP->WidgetVariableNameToGuidMap.Add(
             NewAnim->GetFName(),
             FGuid::NewDeterministicGuid(NewAnim->GetPathName()));
+#endif
 
         return NewAnim;
 #else

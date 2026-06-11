@@ -20,7 +20,13 @@
 #include "UObject/SavePackage.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/PackageName.h"
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+#include "K2Node_LatentGameplayTaskCall.h"
+using FMonolithK2NodeLatentAbilityCall = UK2Node_LatentGameplayTaskCall;
+#else
 #include "K2Node_LatentAbilityCall.h"
+using FMonolithK2NodeLatentAbilityCall = UK2Node_LatentAbilityCall;
+#endif
 #include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
 #include "EdGraphSchema_K2.h"
 #include "K2Node_CallFunction.h"
@@ -521,7 +527,7 @@ FMonolithActionResult FMonolithGASTargetActions::HandleAddTargetingToAbility(con
 	}
 
 	// Create the WaitTargetData ability task node via UK2Node_LatentAbilityCall
-	UK2Node_LatentAbilityCall* WaitTargetNode = NewObject<UK2Node_LatentAbilityCall>(EventGraph);
+	FMonolithK2NodeLatentAbilityCall* WaitTargetNode = NewObject<FMonolithK2NodeLatentAbilityCall>(EventGraph);
 	// ProxyFactoryFunctionName/ProxyFactoryClass/ProxyClass are protected in UE 5.7 — set via reflection
 	{
 		FProperty* FFNProp = WaitTargetNode->GetClass()->FindPropertyByName(TEXT("ProxyFactoryFunctionName"));
@@ -739,7 +745,7 @@ FMonolithActionResult FMonolithGASTargetActions::HandleValidateTargeting(const T
 			if (!Node) continue;
 
 			// Check for UK2Node_LatentAbilityCall with WaitTargetData
-			UK2Node_LatentAbilityCall* LatentNode = Cast<UK2Node_LatentAbilityCall>(Node);
+			FMonolithK2NodeLatentAbilityCall* LatentNode = Cast<FMonolithK2NodeLatentAbilityCall>(Node);
 			if (LatentNode)
 			{
 				// ProxyFactoryFunctionName is protected in UE 5.7 — read via reflection
@@ -790,7 +796,7 @@ FMonolithActionResult FMonolithGASTargetActions::HandleValidateTargeting(const T
 		if (!Graph) continue;
 		for (UEdGraphNode* Node : Graph->Nodes)
 		{
-			UK2Node_LatentAbilityCall* LatentNode = Cast<UK2Node_LatentAbilityCall>(Node);
+			FMonolithK2NodeLatentAbilityCall* LatentNode = Cast<FMonolithK2NodeLatentAbilityCall>(Node);
 			if (LatentNode)
 			{
 				// ProxyFactoryFunctionName is protected in UE 5.7 — read via reflection

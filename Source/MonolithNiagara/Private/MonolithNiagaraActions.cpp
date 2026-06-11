@@ -403,6 +403,18 @@ namespace MonolithNiagaraHelpers
 	}
 
 	// GetParametersForContext — simplified version that collects known parameters
+	void GetParametersForContext(UEdGraph* Graph, UNiagaraSystem& System, TSet<FNiagaraVariable>& OutParams)
+	{
+		TArray<FNiagaraVariable> UserParams;
+		System.GetExposedParameters().GetUserParameters(UserParams);
+		for (FNiagaraVariable& Var : UserParams)
+		{
+			FNiagaraUserRedirectionParameterStore::MakeUserVariable(Var);
+			OutParams.Add(Var);
+		}
+	}
+
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 	void GetParametersForContext(UEdGraph* Graph, UNiagaraSystem& System, TSet<FNiagaraVariableBase>& OutParams)
 	{
 		// Collect from user store
@@ -413,6 +425,7 @@ namespace MonolithNiagaraHelpers
 			OutParams.Add(V);
 		}
 	}
+#endif
 	// GetStackFunctionInputs — enumerate input pins and extract real types via schema
 	void GetStackFunctionInputs(const UNiagaraNodeFunctionCall& Node, TArray<FNiagaraVariable>& OutInputs)
 	{
@@ -1011,6 +1024,45 @@ namespace MonolithNiagaraHelpers
 	}
 
 } // namespace MonolithNiagaraHelpers
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+namespace FNiagaraStackGraphUtilities
+{
+	void GetStackFunctionInputs(
+		const UNiagaraNodeFunctionCall& FunctionCallNode,
+		TArray<FNiagaraVariable>& OutInputVariables,
+		FCompileConstantResolver ConstantResolver,
+		ENiagaraGetStackFunctionInputPinsOptions Options,
+		bool bIgnoreDisabled)
+	{
+		MonolithNiagaraHelpers::GetStackFunctionInputs(FunctionCallNode, OutInputVariables);
+	}
+
+	void GetStackFunctionStaticSwitchPins(
+		const UNiagaraNodeFunctionCall& FunctionCallNode,
+		TArray<UEdGraphPin*>& OutInputPins,
+		TSet<UEdGraphPin*>& OutHiddenPins,
+		FCompileConstantResolver& ConstantResolver)
+	{
+		OutInputPins.Reset();
+		OutHiddenPins.Reset();
+		for (UEdGraphPin* Pin : FunctionCallNode.Pins)
+		{
+			if (Pin && Pin->Direction == EGPD_Input && UEdGraphSchema_Niagara::IsPinStatic(Pin))
+			{
+				if (Pin->bHidden)
+				{
+					OutHiddenPins.Add(Pin);
+				}
+				else
+				{
+					OutInputPins.Add(Pin);
+				}
+			}
+		}
+	}
+}
+#endif
 
 // Helper: wrap a string result in a FJsonObject for FMonolithActionResult::Success
 static FMonolithActionResult NA_SuccessStr(const FString& Msg)
@@ -5029,11 +5081,17 @@ FMonolithActionResult FMonolithNiagaraActions::HandleSetModuleInputBinding(const
 		OP.BreakAllPinLinks();
 	}
 
-	FNiagaraVariable LinkedParam(InputType, FName(*BindingPath));
 	UNiagaraGraph* Graph = MN->GetNiagaraGraph();
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	TSet<FNiagaraVariable> KnownParams;
+	if (Graph) MonolithNiagaraHelpers::GetParametersForContext(Graph, *System, KnownParams);
+	FNiagaraStackGraphUtilities::SetLinkedValueHandleForFunctionInput(OP, FNiagaraParameterHandle(FName(*BindingPath)), KnownParams);
+#else
+	FNiagaraVariable LinkedParam(InputType, FName(*BindingPath));
 	TSet<FNiagaraVariableBase> KnownParams;
 	if (Graph) MonolithNiagaraHelpers::GetParametersForContext(Graph, *System, KnownParams);
 	FNiagaraStackGraphUtilities::SetLinkedParameterValueForFunctionInput(OP, LinkedParam, KnownParams);
+#endif
 
 	GEditor->EndTransaction();
 	System->RequestCompile(false);

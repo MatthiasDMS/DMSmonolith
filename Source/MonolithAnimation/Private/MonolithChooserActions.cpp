@@ -17,7 +17,7 @@
 #include "ObjectChooser_Asset.h"     // FAssetChooser / FSoftAssetChooser (Internal, public path)
 #include "OutputObjectColumn.h"       // FOutputObjectColumn / FChooserOutputObjectRowData (Internal, public path)
 
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 #include "UObject/SoftObjectPtr.h"

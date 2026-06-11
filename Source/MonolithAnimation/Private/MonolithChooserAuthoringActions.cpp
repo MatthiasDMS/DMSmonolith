@@ -21,7 +21,7 @@
 #include "ChooserPropertyAccess.h"   // FChooserPropertyBinding (input binding chain)
 #include "IHasContext.h"             // EObjectChooserResultType
 
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTagsManager.h"
 #include "UObject/Class.h"

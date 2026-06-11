@@ -835,7 +835,11 @@ FMonolithActionResult FMonolithAbpWriteActions::HandleAddAnimGraphNode(const TSh
 	// Spawn via FEdGraphSchemaAction_K2NewNode — same path as the editor
 	FEdGraphSchemaAction_K2NewNode Action;
 	Action.NodeTemplate = Template;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	UEdGraphNode* SpawnedNode = Action.PerformAction(TargetGraph, /*FromPin=*/nullptr, FVector2D(PosX, PosY), /*bSelectNewNode=*/false);
+#else
 	UEdGraphNode* SpawnedNode = Action.PerformAction(TargetGraph, /*FromPin=*/nullptr, FVector2f(PosX, PosY), /*bSelectNewNode=*/false);
+#endif
 
 	GEditor->EndTransaction();
 
@@ -1161,7 +1165,11 @@ FMonolithActionResult FMonolithAbpWriteActions::HandleSetStateAnimation(const TS
 
 	FEdGraphSchemaAction_K2NewNode Action;
 	Action.NodeTemplate = Template;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	UEdGraphNode* SpawnedNode = Action.PerformAction(StateGraph, /*FromPin=*/nullptr, FVector2D(SpawnX, SpawnY), /*bSelectNewNode=*/false);
+#else
 	UEdGraphNode* SpawnedNode = Action.PerformAction(StateGraph, /*FromPin=*/nullptr, FVector2f(SpawnX, SpawnY), /*bSelectNewNode=*/false);
+#endif
 
 	if (!SpawnedNode)
 	{
@@ -1250,7 +1258,11 @@ FMonolithActionResult FMonolithAbpWriteActions::HandleAddVariableGet(const TShar
 
 	FEdGraphSchemaAction_K2NewNode Action;
 	Action.NodeTemplate = Template;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	UEdGraphNode* SpawnedNode = Action.PerformAction(TargetGraph, /*FromPin=*/nullptr, FVector2D(PosX, PosY), /*bSelectNewNode=*/false);
+#else
 	UEdGraphNode* SpawnedNode = Action.PerformAction(TargetGraph, /*FromPin=*/nullptr, FVector2f(PosX, PosY), /*bSelectNewNode=*/false);
+#endif
 
 	GEditor->EndTransaction();
 

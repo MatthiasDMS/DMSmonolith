@@ -24,7 +24,7 @@
 #include "UObject/SavePackage.h"
 #include "UObject/UObjectIterator.h"
 #include "ScopedTransaction.h"
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 #include "Editor.h"
 #include "IMonolithGraphFormatter.h"
 

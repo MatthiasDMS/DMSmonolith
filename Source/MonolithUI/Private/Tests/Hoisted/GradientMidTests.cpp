@@ -16,7 +16,7 @@
 // Materials -- read-back via runtime API
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceConstant.h"
-#include "Materials/MaterialParameters.h"
+#include "MaterialTypes.h"
 
 // Package / loading
 #include "UObject/Package.h"

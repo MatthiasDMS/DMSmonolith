@@ -15,7 +15,7 @@
 #include "UObject/UnrealType.h"
 #include "UObject/UObjectGlobals.h"
 #include "UObject/Class.h"
-#include "Misc/StringOutputDevice.h"
+#include "Containers/UnrealString.h"
 #endif // WITH_EDITOR
 
 // ============================================================================

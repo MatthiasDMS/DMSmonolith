@@ -252,7 +252,11 @@ namespace MonolithGASBulkFillInternal
 		}
 
 		// Overwrite-aware: AddRow internally handles "already present" by replacing.
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		DataTable->AddRow(FName(*FullRowName), *reinterpret_cast<const FTableRowBase*>(RowData));
+#else
 		DataTable->AddRow(FName(*FullRowName), RowData, RowStruct);
+#endif
 
 		RowStruct->DestroyStruct(RowData);
 		FMemory::Free(RowData);

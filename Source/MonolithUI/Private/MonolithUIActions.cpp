@@ -631,7 +631,13 @@ FMonolithActionResult FMonolithUIActions::HandleRemoveWidget(const TSharedPtr<FJ
 
     TSet<UWidget*> WidgetsToDelete;
     WidgetsToDelete.Add(Widget);
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+    Widget->Modify();
+    Widget->RemoveFromParent();
+    Widget->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty);
+#else
     FWidgetBlueprintEditorUtils::DeleteWidgets(WBP, WidgetsToDelete, FWidgetBlueprintEditorUtils::EDeleteWidgetWarningType::DeleteSilently);
+#endif
 
     FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(WBP);
 

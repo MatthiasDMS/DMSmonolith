@@ -10,10 +10,19 @@
 #include "GameplayTagContainer.h"
 #include "EngineUtils.h"
 #include "GameplayEffectComponent.h"
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+#define MONOLITH_GAS_LEGACY_MODOPS 1
+#define MONOLITH_GAS_HAS_CANCEL_ABILITY_TAGS_COMPONENT 0
+#else
+#define MONOLITH_GAS_LEGACY_MODOPS 0
+#define MONOLITH_GAS_HAS_CANCEL_ABILITY_TAGS_COMPONENT 1
+#endif
 #include "GameplayEffectComponents/AssetTagsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/BlockAbilityTagsGameplayEffectComponent.h"
+#if MONOLITH_GAS_HAS_CANCEL_ABILITY_TAGS_COMPONENT
 #include "GameplayEffectComponents/CancelAbilityTagsGameplayEffectComponent.h"
+#endif
 #include "GameplayEffectComponents/TargetTagRequirementsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/AdditionalEffectsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/ImmunityGameplayEffectComponent.h"
@@ -195,15 +204,28 @@ bool ParseModifierOp(const FString& OpStr, EGameplayModOp::Type& OutOp, FString&
 	}
 	else if (OpStr.Equals(TEXT("Multiply"), ESearchCase::IgnoreCase) || OpStr.Equals(TEXT("MultiplyAdditive"), ESearchCase::IgnoreCase))
 	{
+#if MONOLITH_GAS_LEGACY_MODOPS
+		OutOp = EGameplayModOp::Multiplicitive;
+#else
 		OutOp = EGameplayModOp::MultiplyAdditive;
+#endif
 	}
 	else if (OpStr.Equals(TEXT("MultiplyCompound"), ESearchCase::IgnoreCase))
 	{
+#if MONOLITH_GAS_LEGACY_MODOPS
+		OutError = FString::Printf(TEXT("Modifier operation '%s' requires UE 5.5 or newer. Valid for UE 5.4: Add, Multiply, Divide, Override"), *OpStr);
+		return false;
+#else
 		OutOp = EGameplayModOp::MultiplyCompound;
+#endif
 	}
 	else if (OpStr.Equals(TEXT("Divide"), ESearchCase::IgnoreCase))
 	{
+#if MONOLITH_GAS_LEGACY_MODOPS
+		OutOp = EGameplayModOp::Division;
+#else
 		OutOp = EGameplayModOp::DivideAdditive;
+#endif
 	}
 	else if (OpStr.Equals(TEXT("Override"), ESearchCase::IgnoreCase))
 	{
@@ -211,11 +233,20 @@ bool ParseModifierOp(const FString& OpStr, EGameplayModOp::Type& OutOp, FString&
 	}
 	else if (OpStr.Equals(TEXT("AddFinal"), ESearchCase::IgnoreCase))
 	{
+#if MONOLITH_GAS_LEGACY_MODOPS
+		OutError = FString::Printf(TEXT("Modifier operation '%s' requires UE 5.5 or newer. Valid for UE 5.4: Add, Multiply, Divide, Override"), *OpStr);
+		return false;
+#else
 		OutOp = EGameplayModOp::AddFinal;
+#endif
 	}
 	else
 	{
+#if MONOLITH_GAS_LEGACY_MODOPS
+		OutError = FString::Printf(TEXT("Unknown modifier operation: %s. Valid for UE 5.4: Add, Multiply, Divide, Override"), *OpStr);
+#else
 		OutError = FString::Printf(TEXT("Unknown modifier operation: %s. Valid: Add, Multiply, MultiplyCompound, Divide, Override, AddFinal"), *OpStr);
+#endif
 		return false;
 	}
 	return true;
@@ -227,11 +258,16 @@ FString ModifierOpToString(EGameplayModOp::Type Op)
 	switch (Op)
 	{
 	case EGameplayModOp::Additive:          return TEXT("Add");
+#if MONOLITH_GAS_LEGACY_MODOPS
+	case EGameplayModOp::Multiplicitive:    return TEXT("Multiply");
+	case EGameplayModOp::Division:          return TEXT("Divide");
+#else
 	case EGameplayModOp::MultiplyAdditive:  return TEXT("Multiply");
 	case EGameplayModOp::MultiplyCompound:  return TEXT("MultiplyCompound");
 	case EGameplayModOp::DivideAdditive:    return TEXT("Divide");
-	case EGameplayModOp::Override:          return TEXT("Override");
 	case EGameplayModOp::AddFinal:          return TEXT("AddFinal");
+#endif
+	case EGameplayModOp::Override:          return TEXT("Override");
 	default:                                return TEXT("Unknown");
 	}
 }
@@ -521,10 +557,12 @@ TSharedPtr<FJsonObject> GEComponentToJson(const UGameplayEffectComponent* Comp)
 	{
 		Obj->SetStringField(TEXT("type"), TEXT("grant_abilities"));
 	}
+#if MONOLITH_GAS_HAS_CANCEL_ABILITY_TAGS_COMPONENT
 	else if (const UCancelAbilityTagsGameplayEffectComponent* CancelTags = Cast<UCancelAbilityTagsGameplayEffectComponent>(Comp))
 	{
 		Obj->SetStringField(TEXT("type"), TEXT("cancel_abilities"));
 	}
+#endif
 	else
 	{
 		Obj->SetStringField(TEXT("type"), TEXT("custom"));
@@ -542,7 +580,9 @@ UClass* ResolveComponentClass(const FString& TypeStr, FString& OutError)
 		TypeMap.Add(TEXT("asset_tags"),                UAssetTagsGameplayEffectComponent::StaticClass());
 		TypeMap.Add(TEXT("target_tags"),               UTargetTagsGameplayEffectComponent::StaticClass());
 		TypeMap.Add(TEXT("block_abilities"),           UBlockAbilityTagsGameplayEffectComponent::StaticClass());
+#if MONOLITH_GAS_HAS_CANCEL_ABILITY_TAGS_COMPONENT
 		TypeMap.Add(TEXT("cancel_abilities"),          UCancelAbilityTagsGameplayEffectComponent::StaticClass());
+#endif
 		TypeMap.Add(TEXT("target_tag_requirements"),   UTargetTagRequirementsGameplayEffectComponent::StaticClass());
 		TypeMap.Add(TEXT("additional_effects"),        UAdditionalEffectsGameplayEffectComponent::StaticClass());
 		TypeMap.Add(TEXT("immunity"),                  UImmunityGameplayEffectComponent::StaticClass());
@@ -557,7 +597,11 @@ UClass* ResolveComponentClass(const FString& TypeStr, FString& OutError)
 		return *Found;
 	}
 
+#if MONOLITH_GAS_HAS_CANCEL_ABILITY_TAGS_COMPONENT
 	OutError = FString::Printf(TEXT("Unknown component_type: '%s'. Valid: asset_tags, target_tags, block_abilities, cancel_abilities, target_tag_requirements, additional_effects, immunity, remove_other, chance_to_apply, custom_can_apply, grant_abilities"), *TypeStr);
+#else
+	OutError = FString::Printf(TEXT("Unknown component_type: '%s'. Valid for UE 5.4: asset_tags, target_tags, block_abilities, target_tag_requirements, additional_effects, immunity, remove_other, chance_to_apply, custom_can_apply, grant_abilities"), *TypeStr);
+#endif
 	return nullptr;
 }
 
@@ -1571,6 +1615,7 @@ FMonolithActionResult FMonolithGASEffectActions::HandleAddGEComponent(const TSha
 		ApplyTagConfig(Config, Tags);
 		Comp->SetAndApplyBlockedAbilityTagChanges(Tags);
 	}
+#if MONOLITH_GAS_HAS_CANCEL_ABILITY_TAGS_COMPONENT
 	else if (ComponentType == TEXT("cancel_abilities"))
 	{
 		UCancelAbilityTagsGameplayEffectComponent* Comp = CastChecked<UCancelAbilityTagsGameplayEffectComponent>(NewComp);
@@ -1585,6 +1630,7 @@ FMonolithActionResult FMonolithGASEffectActions::HandleAddGEComponent(const TSha
 		}
 		Comp->SetAndApplyCanceledAbilityTagChanges(WithTags, WithoutTags);
 	}
+#endif
 	else if (ComponentType == TEXT("target_tag_requirements"))
 	{
 		UTargetTagRequirementsGameplayEffectComponent* Comp = CastChecked<UTargetTagRequirementsGameplayEffectComponent>(NewComp);
@@ -1747,6 +1793,7 @@ FMonolithActionResult FMonolithGASEffectActions::HandleSetGEComponent(const TSha
 		ApplyTagConfig(Config, Tags);
 		Comp->SetAndApplyBlockedAbilityTagChanges(Tags);
 	}
+#if MONOLITH_GAS_HAS_CANCEL_ABILITY_TAGS_COMPONENT
 	else if (ComponentType == TEXT("cancel_abilities"))
 	{
 		UCancelAbilityTagsGameplayEffectComponent* Comp = CastChecked<UCancelAbilityTagsGameplayEffectComponent>(FoundComp);
@@ -1760,6 +1807,7 @@ FMonolithActionResult FMonolithGASEffectActions::HandleSetGEComponent(const TSha
 		}
 		Comp->SetAndApplyCanceledAbilityTagChanges(WithTags, WithoutTags);
 	}
+#endif
 	else if (ComponentType == TEXT("target_tag_requirements"))
 	{
 		UTargetTagRequirementsGameplayEffectComponent* Comp = CastChecked<UTargetTagRequirementsGameplayEffectComponent>(FoundComp);
@@ -3833,10 +3881,15 @@ FMonolithActionResult FMonolithGASEffectActions::HandleGetEffectModifiersBreakdo
 			switch (Mod.ModifierOp)
 			{
 			case EGameplayModOp::Additive:          Additive += EffectiveMagnitude; break;
+#if MONOLITH_GAS_LEGACY_MODOPS
+			case EGameplayModOp::Multiplicitive:    MultiplyAdditive += EffectiveMagnitude; break;
+			case EGameplayModOp::Division:          DivideAdditive += EffectiveMagnitude; break;
+#else
 			case EGameplayModOp::MultiplyAdditive:  MultiplyAdditive += EffectiveMagnitude; break;
 			case EGameplayModOp::MultiplyCompound:  MultiplyCompound *= EffectiveMagnitude; break;
 			case EGameplayModOp::DivideAdditive:    DivideAdditive += EffectiveMagnitude; break;
 			case EGameplayModOp::AddFinal:          AddFinal += EffectiveMagnitude; break;
+#endif
 			default: break;
 			}
 		}
@@ -4139,11 +4192,16 @@ FMonolithActionResult FMonolithGASEffectActions::HandleSimulateEffectStack(const
 		switch (Op)
 		{
 		case EGameplayModOp::Additive:          Additive += Mag; break;
+#if MONOLITH_GAS_LEGACY_MODOPS
+		case EGameplayModOp::Multiplicitive:    MultiplyAdditive += Mag; break;
+		case EGameplayModOp::Division:          DivideAdditive += Mag; break;
+#else
 		case EGameplayModOp::MultiplyAdditive:  MultiplyAdditive += Mag; break;
 		case EGameplayModOp::MultiplyCompound:  MultiplyCompound *= Mag; break;
 		case EGameplayModOp::DivideAdditive:    DivideAdditive += Mag; break;
-		case EGameplayModOp::Override:          Override = Mag; bHasOverride = true; break;
 		case EGameplayModOp::AddFinal:          AddFinal += Mag; break;
+#endif
+		case EGameplayModOp::Override:          Override = Mag; bHasOverride = true; break;
 		default: break;
 		}
 

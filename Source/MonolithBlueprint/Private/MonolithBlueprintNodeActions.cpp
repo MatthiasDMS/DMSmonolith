@@ -978,7 +978,30 @@ FMonolithActionResult FMonolithBlueprintNodeActions::HandleAddNode(const TShared
 		}
 
 		UK2Node_SwitchEnum* SwitchNode = NewObject<UK2Node_SwitchEnum>(Graph);
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		SwitchNode->Enum = FoundEnum;
+		SwitchNode->EnumEntries.Empty();
+		SwitchNode->EnumFriendlyNames.Empty();
+		if (FoundEnum)
+		{
+			if (IsInGameThread() || FoundEnum->IsPostLoadThreadSafe())
+			{
+				FoundEnum->ConditionalPostLoad();
+			}
+			for (int32 EnumIndex = 0; EnumIndex < FoundEnum->NumEnums() - 1; ++EnumIndex)
+			{
+				const bool bShouldBeHidden = FoundEnum->HasMetaData(TEXT("Hidden"), EnumIndex)
+					|| FoundEnum->HasMetaData(TEXT("Spacer"), EnumIndex);
+				if (!bShouldBeHidden)
+				{
+					SwitchNode->EnumEntries.Add(FName(*FoundEnum->GetNameStringByIndex(EnumIndex)));
+					SwitchNode->EnumFriendlyNames.Add(FoundEnum->GetDisplayNameTextByIndex(EnumIndex));
+				}
+			}
+		}
+#else
 		SwitchNode->SetEnum(FoundEnum);
+#endif
 		SwitchNode->NodePosX = PosX;
 		SwitchNode->NodePosY = PosY;
 		Graph->AddNode(SwitchNode, true, false);

@@ -33,7 +33,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "Materials/MaterialParameters.h"
+#include "MaterialTypes.h"
 
 // Asset registry + asset tools (unique naming for saved-MID case)
 #include "AssetRegistry/AssetRegistryModule.h"

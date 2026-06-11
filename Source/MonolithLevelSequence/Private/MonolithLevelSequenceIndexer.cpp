@@ -7,9 +7,11 @@
 #include "MovieSceneSpawnable.h"
 #include "MovieSceneSequence.h"
 #include "MovieSceneBindingReferences.h"
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 #include "Bindings/MovieSceneCustomBinding.h"
 #include "Bindings/MovieSceneSpawnableBinding.h"
 #include "Bindings/MovieSceneReplaceableBinding.h"
+#endif
 #include "Tracks/MovieSceneEventTrack.h"
 #include "Sections/MovieSceneEventTriggerSection.h"
 #include "Sections/MovieSceneEventRepeaterSection.h"
@@ -360,6 +362,7 @@ namespace
 			}
 		}
 
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 		const UMovieSceneCustomBinding* Custom = nullptr;
 		if (Seq)
 		{
@@ -394,7 +397,9 @@ namespace
 				OutKind = TEXT("custom");
 			}
 		}
-		else if (OutKind.IsEmpty())
+		else
+#endif
+		if (OutKind.IsEmpty())
 		{
 			OutKind = Possessable ? TEXT("possessable") : TEXT("unknown");
 		}

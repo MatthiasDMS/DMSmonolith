@@ -107,13 +107,17 @@ namespace MonolithUI::ErrorFormattingTests
         UCanvasPanel* Root = WBP->WidgetTree->ConstructWidget<UCanvasPanel>(
             UCanvasPanel::StaticClass(), TEXT("RootCanvas"));
         WBP->WidgetTree->RootWidget = Root;
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
         WBP->OnVariableAdded(Root->GetFName());
+#endif
 
         if (ChildClass)
         {
             UWidget* Child = WBP->WidgetTree->ConstructWidget<UWidget>(ChildClass, ChildName);
             Root->AddChild(Child);
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
             WBP->OnVariableAdded(Child->GetFName());
+#endif
         }
 
         FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(WBP);

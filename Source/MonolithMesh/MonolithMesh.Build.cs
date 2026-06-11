@@ -58,6 +58,10 @@ public class MonolithMesh : ModuleRules
 				"Plugins", "Runtime", "GeometryScripting");
 			bHasGeometryScripting = Directory.Exists(GeometryScriptingPath);
 		}
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			bHasGeometryScripting = false;
+		}
 
 		if (bHasGeometryScripting)
 		{

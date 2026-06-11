@@ -2109,8 +2109,12 @@ FMonolithActionResult FMonolithGASASCActions::HandleGetASCSnapshot(const TShared
 			AbilObj->SetNumberField(TEXT("input_id"), Spec.InputID);
 			AbilObj->SetBoolField(TEXT("is_active"), Spec.IsActive());
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+			const FGameplayTagContainer& AbilityTags = Spec.Ability->AbilityTags;
+#else
 			// Get ability tags via GetAssetTags() (AbilityTags direct access deprecated UE 5.7)
 			const FGameplayTagContainer& AbilityTags = Spec.Ability->GetAssetTags();
+#endif
 			if (AbilityTags.Num() > 0)
 			{
 				AbilObj->SetField(TEXT("ability_tags"), MonolithGAS::TagContainerToJson(AbilityTags));

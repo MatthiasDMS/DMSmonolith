@@ -97,7 +97,7 @@ FMonolithActionResult FMonolithBlueprintStringTableActions::HandleReadStringTabl
 		[&Entries, &Table, bIncludeMeta](const FTextKey& Key, const FString& SourceString) -> bool
 		{
 			TSharedPtr<FJsonObject> Entry = MakeShared<FJsonObject>();
-			Entry->SetStringField(TEXT("key"), Key.ToString());
+			Entry->SetStringField(TEXT("key"), FString(Key.GetChars()));
 			Entry->SetStringField(TEXT("source_string"), SourceString);
 
 			if (bIncludeMeta)
@@ -183,7 +183,11 @@ FMonolithActionResult FMonolithBlueprintStringTableActions::HandleSetStringTable
 	FString Namespace;
 	if (Params->TryGetStringField(TEXT("namespace"), Namespace))
 	{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		Table->SetNamespace(Namespace);
+#else
 		Table->SetNamespace(FTextKey(*Namespace));
+#endif
 	}
 
 	int32 EntriesWritten = 0;

@@ -14,7 +14,7 @@
 #include "Serialization/JsonWriter.h"
 #include "Serialization/JsonSerializer.h"
 #include "JsonObjectConverter.h"
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 #include "ScopedTransaction.h"
 #include "MonolithBlueprintEditCradle.h"
 

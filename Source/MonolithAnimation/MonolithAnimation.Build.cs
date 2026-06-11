@@ -37,6 +37,11 @@ public class MonolithAnimation : ModuleRules
 			"BlendStackEditor",    // UAnimGraphNode_BlendStack_Base (Sprint 4 BoundGraph-node spawn fix)
 		});
 
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			PrivateDependencyModuleNames.Add("StructUtils");
+		}
+
 		// --- Conditional: Chooser (UChooserTable authoring) ---
 		// The Chooser plugin ships with the engine but can be disabled per-project.
 		// Gate the dependency so a project without it still links MonolithAnimation
@@ -82,6 +87,11 @@ public class MonolithAnimation : ModuleRules
 							Path.Combine(EnginePluginsDir, "Experimental", "Chooser"));
 				}
 			}
+		}
+
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			bHasChooser = false;
 		}
 
 		if (bHasChooser)

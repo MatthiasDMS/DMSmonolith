@@ -20,6 +20,7 @@
 
 // Highlight material
 #include "Materials/MaterialInstanceDynamic.h"
+#include "MaterialDomain.h"
 #include "Components/StaticMeshComponent.h"
 
 // JSON / file I/O
@@ -840,7 +841,7 @@ FMonolithActionResult FMonolithMeshDebugViewActions::HighlightRoom(const TShared
 	HighlightActor->SetActorScale3D(Scale);
 
 	// Create translucent material
-	UMaterial* BaseMat = UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface);
+	UMaterial* BaseMat = UMaterial::GetDefaultMaterial(MD_Surface);
 	UMaterialInstanceDynamic* MID = UMaterialInstanceDynamic::Create(BaseMat, GetTransientPackage());
 
 	if (HighlightMode == TEXT("wireframe"))

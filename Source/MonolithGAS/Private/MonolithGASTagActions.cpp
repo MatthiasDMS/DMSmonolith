@@ -832,7 +832,11 @@ FMonolithActionResult FMonolithGASTagActions::HandleRenameTag(const TSharedPtr<F
 
 		// Use engine API to rename tag in INI (adds new tag, creates redirector, optionally renames children)
 		IGameplayTagsEditorModule& TagsEditor = IGameplayTagsEditorModule::Get();
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		bool bRenameOk = TagsEditor.RenameTagInINI(OldTag, NewTag);
+#else
 		bool bRenameOk = TagsEditor.RenameTagInINI(OldTag, NewTag, /*bRenameChildren=*/ false);
+#endif
 
 		if (!bRenameOk)
 		{
@@ -1020,7 +1024,14 @@ FMonolithActionResult FMonolithGASTagActions::HandleRemoveGameplayTags(const TSh
 
 		if (NodesToDelete.Num() > 0)
 		{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+			for (const TSharedPtr<FGameplayTagNode>& NodeToDelete : NodesToDelete)
+			{
+				TagsEditor.DeleteTagFromINI(NodeToDelete);
+			}
+#else
 			TagsEditor.DeleteTagsFromINI(NodesToDelete);
+#endif
 		}
 	}
 
@@ -1682,7 +1693,14 @@ FMonolithActionResult FMonolithGASTagActions::HandleImportTagHierarchy(const TSh
 			}
 			if (NodesToDelete.Num() > 0)
 			{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+				for (const TSharedPtr<FGameplayTagNode>& NodeToDelete : NodesToDelete)
+				{
+					TagsEditor.DeleteTagFromINI(NodeToDelete);
+				}
+#else
 				TagsEditor.DeleteTagsFromINI(NodesToDelete);
+#endif
 			}
 		}
 

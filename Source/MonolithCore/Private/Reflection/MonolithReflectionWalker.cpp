@@ -8,12 +8,12 @@
 #include "UObject/PropertyPortFlags.h"
 #include "UObject/SoftObjectPtr.h"
 #include "UObject/Class.h"
-#include "Misc/StringOutputDevice.h"
+#include "Containers/UnrealString.h"
 #include "Algo/Count.h"
 
 #if WITH_EDITOR
 #include "Kismet2/StructureEditorUtils.h"
-#include "StructUtils/UserDefinedStruct.h"
+#include "Engine/UserDefinedStruct.h"
 #include "UserDefinedStructure/UserDefinedStructEditorData.h"
 #endif
 

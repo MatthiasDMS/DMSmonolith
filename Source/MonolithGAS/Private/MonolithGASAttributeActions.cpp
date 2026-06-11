@@ -2295,7 +2295,11 @@ FMonolithActionResult FMonolithGASAttributeActions::HandleCreateAttributeInitDat
 			MaxValueProp->CopyCompleteValue(MaxValueProp->ContainerPtrToValuePtr<void>(RowData), &Val);
 		}
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		DataTable->AddRow(FName(*RowName), *reinterpret_cast<const FTableRowBase*>(RowData));
+#else
 		DataTable->AddRow(FName(*RowName), RowData, RowStruct);
+#endif
 
 		RowStruct->DestroyStruct(RowData);
 		FMemory::Free(RowData);
@@ -3170,14 +3174,41 @@ FMonolithActionResult FMonolithGASAttributeActions::HandleFindAttributeModifiers
 					const FGameplayModifierInfo& Mod = GE->Modifiers[Idx];
 					TSharedPtr<FJsonObject> ModObj = MakeShared<FJsonObject>();
 					ModObj->SetNumberField(TEXT("modifier_index"), Idx);
-					ModObj->SetStringField(TEXT("operation"),
-						Mod.ModifierOp == EGameplayModOp::Additive ? TEXT("Add") :
-						Mod.ModifierOp == EGameplayModOp::MultiplyAdditive ? TEXT("Multiply") :
-						Mod.ModifierOp == EGameplayModOp::MultiplyCompound ? TEXT("MultiplyCompound") :
-						Mod.ModifierOp == EGameplayModOp::DivideAdditive ? TEXT("Divide") :
-						Mod.ModifierOp == EGameplayModOp::Override ? TEXT("Override") :
-						Mod.ModifierOp == EGameplayModOp::AddFinal ? TEXT("AddFinal") :
-						TEXT("Unknown"));
+					FString OperationString;
+					switch (Mod.ModifierOp)
+					{
+					case EGameplayModOp::Additive:
+						OperationString = TEXT("Add");
+						break;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+					case EGameplayModOp::Multiplicitive:
+						OperationString = TEXT("Multiply");
+						break;
+					case EGameplayModOp::Division:
+						OperationString = TEXT("Divide");
+						break;
+#else
+					case EGameplayModOp::MultiplyAdditive:
+						OperationString = TEXT("Multiply");
+						break;
+					case EGameplayModOp::MultiplyCompound:
+						OperationString = TEXT("MultiplyCompound");
+						break;
+					case EGameplayModOp::DivideAdditive:
+						OperationString = TEXT("Divide");
+						break;
+					case EGameplayModOp::AddFinal:
+						OperationString = TEXT("AddFinal");
+						break;
+#endif
+					case EGameplayModOp::Override:
+						OperationString = TEXT("Override");
+						break;
+					default:
+						OperationString = TEXT("Unknown");
+						break;
+					}
+					ModObj->SetStringField(TEXT("operation"), OperationString);
 					float StaticMag = 0.f;
 					if (Mod.ModifierMagnitude.GetStaticMagnitudeIfPossible(1.f, StaticMag))
 					{

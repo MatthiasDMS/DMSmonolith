@@ -18,7 +18,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialInstanceConstant.h"
-#include "Materials/MaterialParameters.h"
+#include "MaterialTypes.h"
 
 // MaterialEditor module -- required for UpdateMaterialInstance after static switch writes
 #include "MaterialEditingLibrary.h"

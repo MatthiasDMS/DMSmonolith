@@ -154,6 +154,25 @@ void FMaterialIndexer::IndexMaterialExpressions(UMaterial* Material, FMonolithIn
 		if (!TargetNodeId) continue;
 
 		int32 InputIdx = 0;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		for (FExpressionInput* Input : Expr->GetInputsView())
+		{
+			if (!Input || !Input->Expression) continue;
+
+			int64* SourceNodeId = ExpressionIdMap.Find(Input->Expression);
+			if (!SourceNodeId) continue;
+
+			FIndexedConnection Conn;
+			Conn.SourceNodeId = *SourceNodeId;
+			Conn.SourcePin = FString::Printf(TEXT("Output_%d"), Input->OutputIndex);
+			Conn.TargetNodeId = *TargetNodeId;
+			Conn.TargetPin = FString::Printf(TEXT("Input_%d"), InputIdx);
+			Conn.PinType = TEXT("Material");
+
+			DB.InsertConnection(Conn);
+			++InputIdx;
+		}
+#else
 		for (FExpressionInputIterator It(Expr); It; ++It, ++InputIdx)
 		{
 			if (!It->Expression) continue;
@@ -170,6 +189,7 @@ void FMaterialIndexer::IndexMaterialExpressions(UMaterial* Material, FMonolithIn
 
 			DB.InsertConnection(Conn);
 		}
+#endif
 	}
 }
 

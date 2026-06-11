@@ -3,7 +3,7 @@
 #include "Reflection/MonolithReflectionReader.h"
 #include "UObject/UnrealType.h"
 #include "UObject/Class.h"
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 
 TSharedPtr<FJsonValue> FMonolithReflectionReader::PropertyToJsonValue(FProperty* Prop, const void* ValuePtr, const UObject* Owner)
 {

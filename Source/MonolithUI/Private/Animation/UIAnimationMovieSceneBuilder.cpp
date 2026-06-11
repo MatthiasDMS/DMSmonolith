@@ -48,7 +48,9 @@ namespace MonolithUI::AnimationBuilderInternal
         }
 
         WBP->Animations.Remove(Existing);
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
         WBP->WidgetVariableNameToGuidMap.Remove(Existing->GetFName());
+#endif
 
         // Rename out so a same-name FindOrCreate doesn't trip over a stale UObject.
         Existing->Rename(

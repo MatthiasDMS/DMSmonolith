@@ -2,6 +2,14 @@
 #include "MonolithAssetUtils.h"
 #include "MonolithParamSchema.h"
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+
+void FMonolithPoseSearchActions::RegisterActions(FMonolithToolRegistry& Registry)
+{
+}
+
+#else
+
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "PoseSearch/PoseSearchNormalizationSet.h"
 #include "PoseSearch/PoseSearchSchema.h"
@@ -1917,7 +1925,9 @@ static FMonolithActionResult HandleValidatePoseSearchDatabase(const TSharedPtr<F
 	Root->SetArrayField(TEXT("issues"), Issues);
 	if (Database->Schema)
 	{
-		Root->SetStringField(TEXT("schema"), Database->Schema->GetPathName());
+	Root->SetStringField(TEXT("schema"), Database->Schema->GetPathName());
 	}
 	return FMonolithActionResult::Success(Root);
 }
+
+#endif

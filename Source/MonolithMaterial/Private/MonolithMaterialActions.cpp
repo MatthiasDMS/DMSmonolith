@@ -49,13 +49,47 @@
 #include "Engine/TextureCube.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/EngineTypes.h"
+#include "MaterialDomain.h"
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 #include "Engine/TextureCollection.h"
+#endif
 #include "Engine/Font.h"
 #include "VT/RuntimeVirtualTexture.h"
 #include "SparseVolumeTexture/SparseVolumeTexture.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "MaterialGraph/MaterialGraphNode.h"
 #include "IMonolithGraphFormatter.h"
+
+static void MonolithRebuildCustomOutputs(UMaterialExpressionCustom* CustomExpr)
+{
+	if (!CustomExpr)
+	{
+		return;
+	}
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	CustomExpr->Outputs.Reset(CustomExpr->AdditionalOutputs.Num() + 1);
+	if (CustomExpr->AdditionalOutputs.Num() == 0)
+	{
+		CustomExpr->bShowOutputNameOnPin = false;
+		CustomExpr->Outputs.Add(FExpressionOutput(TEXT("")));
+	}
+	else
+	{
+		CustomExpr->bShowOutputNameOnPin = true;
+		CustomExpr->Outputs.Add(FExpressionOutput(TEXT("return")));
+		for (const FCustomOutput& CustomOutput : CustomExpr->AdditionalOutputs)
+		{
+			if (!CustomOutput.OutputName.IsNone())
+			{
+				CustomExpr->Outputs.Add(FExpressionOutput(CustomOutput.OutputName));
+			}
+		}
+	}
+#else
+	MonolithRebuildCustomOutputs(CustomExpr);
+#endif
+}
 
 // ============================================================================
 // Pin name normalization — UE's GetShortenPinName converts raw names to
@@ -2413,7 +2447,7 @@ FMonolithActionResult FMonolithMaterialActions::CreateCustomHLSLNode(const TShar
 		}
 	}
 
-	CustomExpr->RebuildOutputs();
+	MonolithRebuildCustomOutputs(CustomExpr);
 	GEditor->EndTransaction();
 
 	auto ResultJson = MakeShared<FJsonObject>();
@@ -3292,8 +3326,12 @@ FMonolithActionResult FMonolithMaterialActions::RecompileMaterial(const TSharedP
 		ResultJson->SetNumberField(TEXT("num_pixel_shader_instructions"), Stats.NumPixelShaderInstructions);
 		ResultJson->SetNumberField(TEXT("num_vertex_shader_instructions"), Stats.NumVertexShaderInstructions);
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		FMaterialResource* MatResource = BaseMat->GetMaterialResource(GMaxRHIFeatureLevel);
+#else
 		const EShaderPlatform ShaderPlatform = GShaderPlatformForFeatureLevel[GMaxRHIFeatureLevel];
 		FMaterialResource* MatResource = BaseMat->GetMaterialResource(ShaderPlatform);
+#endif
 		bool bIsCompiled = false;
 		if (MatResource)
 		{
@@ -3385,8 +3423,12 @@ FMonolithActionResult FMonolithMaterialActions::GetCompilationStats(const TShare
 	ResultJson->SetStringField(TEXT("asset_path"), AssetPath);
 
 	// Get material resource for the current shader platform
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	FMaterialResource* MatResource = BaseMat->GetMaterialResource(GMaxRHIFeatureLevel);
+#else
 	const EShaderPlatform ShaderPlatform = GShaderPlatformForFeatureLevel[GMaxRHIFeatureLevel];
 	FMaterialResource* MatResource = BaseMat->GetMaterialResource(ShaderPlatform);
+#endif
 	if (MatResource)
 	{
 		bool bIsCompiled = MatResource->IsGameThreadShaderMapComplete();
@@ -5187,7 +5229,7 @@ FMonolithActionResult FMonolithMaterialActions::UpdateCustomHlslNode(const TShar
 	}
 
 	// Rebuild outputs after any structural change
-	CustomExpr->RebuildOutputs();
+	MonolithRebuildCustomOutputs(CustomExpr);
 
 	Mat->PreEditChange(nullptr);
 	Mat->PostEditChange();
@@ -6170,7 +6212,7 @@ void FMonolithMaterialActions::BuildGraphFromSpec(
 				}
 			}
 
-			CustomExpr->RebuildOutputs();
+			MonolithRebuildCustomOutputs(CustomExpr);
 			// Mirror Phase 1 empty-key guard: never register a blank key in IdToExpr
 			FString CustomLookupId = !Id.IsEmpty() ? Id : (!CustomUserName.IsEmpty() ? CustomUserName : CustomExpr->GetName());
 			IdToExpr.Add(CustomLookupId, CustomExpr);
@@ -6918,8 +6960,10 @@ FMonolithActionResult FMonolithMaterialActions::ExportFunctionGraph(const TShare
 			PreviewArr.Add(MakeShared<FJsonValueNumber>(FuncInput->PreviewValue.W));
 			InputJson->SetArrayField(TEXT("preview_value"), PreviewArr);
 
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 			// Blend input relevance
 			InputJson->SetNumberField(TEXT("blend_input_relevance"), static_cast<int32>(FuncInput->BlendInputRelevance));
+#endif
 
 			if (bIncludePositions)
 			{
@@ -8294,8 +8338,12 @@ FMonolithActionResult FMonolithMaterialActions::CreatePbrMaterialFromDisk(const 
 	StatsJson->SetNumberField(TEXT("ps_instructions"), Stats.NumPixelShaderInstructions);
 
 	// Sampler count from material resource
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	FMaterialResource* MatResource = NewMat->GetMaterialResource(GMaxRHIFeatureLevel);
+#else
 	const EShaderPlatform ShaderPlatform = GShaderPlatformForFeatureLevel[GMaxRHIFeatureLevel];
 	FMaterialResource* MatResource = NewMat->GetMaterialResource(ShaderPlatform);
+#endif
 	if (MatResource)
 	{
 		StatsJson->SetNumberField(TEXT("num_samplers"), MatResource->GetSamplerUsage());
@@ -8882,6 +8930,7 @@ FMonolithActionResult FMonolithMaterialActions::GetFunctionInstanceInfo(const TS
 
 	// --- Texture collection parameter overrides ---
 	TArray<TSharedPtr<FJsonValue>> TexCollArr;
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 	for (const auto& Param : MFI->TextureCollectionParameterValues)
 	{
 		auto PJson = MakeShared<FJsonObject>();
@@ -8889,10 +8938,12 @@ FMonolithActionResult FMonolithMaterialActions::GetFunctionInstanceInfo(const TS
 		PJson->SetStringField(TEXT("value"), Param.ParameterValue ? Param.ParameterValue->GetPathName() : TEXT("None"));
 		TexCollArr.Add(MakeShared<FJsonValueObject>(PJson));
 	}
+#endif
 	ResultJson->SetArrayField(TEXT("texture_collection_overrides"), TexCollArr);
 
 	// --- Parameter collection parameter overrides ---
 	TArray<TSharedPtr<FJsonValue>> ParamCollArr;
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 	for (const auto& Param : MFI->ParameterCollectionParameterValues)
 	{
 		auto PJson = MakeShared<FJsonObject>();
@@ -8900,6 +8951,7 @@ FMonolithActionResult FMonolithMaterialActions::GetFunctionInstanceInfo(const TS
 		PJson->SetStringField(TEXT("value"), Param.ParameterValue ? Param.ParameterValue->GetPathName() : TEXT("None"));
 		ParamCollArr.Add(MakeShared<FJsonValueObject>(PJson));
 	}
+#endif
 	ResultJson->SetArrayField(TEXT("parameter_collection_overrides"), ParamCollArr);
 
 	// --- Font parameter overrides ---
@@ -9086,6 +9138,9 @@ FMonolithActionResult FMonolithMaterialActions::RenameFunctionParameterGroup(con
 		return FMonolithActionResult::Error(FString::Printf(TEXT("Asset '%s' is not a MaterialFunctionInterface (type: %s)"), *AssetPath, *LoadedAsset->GetClass()->GetName()));
 	}
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	return FMonolithActionResult::Error(TEXT("rename_material_function_parameter_group requires UE 5.5 or newer"));
+#else
 	bool bRenamed = UMaterialEditingLibrary::RenameMaterialFunctionParameterGroup(MatFuncInterface, FName(*OldGroup), FName(*NewGroup));
 
 	auto ResultJson = MakeShared<FJsonObject>();
@@ -9093,6 +9148,7 @@ FMonolithActionResult FMonolithMaterialActions::RenameFunctionParameterGroup(con
 	ResultJson->SetBoolField(TEXT("renamed"), bRenamed);
 
 	return FMonolithActionResult::Success(ResultJson);
+#endif
 }
 
 // ============================================================================
@@ -9721,6 +9777,15 @@ FMonolithActionResult FMonolithMaterialActions::CheckTilingQuality(const TShared
 				}
 
 				// Enqueue upstream inputs for next depth level
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+				for (FExpressionInput* Input : Expr->GetInputsView())
+				{
+					if (Input && Input->Expression)
+					{
+						NextLevel.Add(Input->Expression);
+					}
+				}
+#else
 				for (FExpressionInputIterator It(Expr); It; ++It)
 				{
 					if (It.Input && It.Input->Expression)
@@ -9728,6 +9793,7 @@ FMonolithActionResult FMonolithMaterialActions::CheckTilingQuality(const TShared
 						NextLevel.Add(It.Input->Expression);
 					}
 				}
+#endif
 			}
 			Stack = MoveTemp(NextLevel);
 		}

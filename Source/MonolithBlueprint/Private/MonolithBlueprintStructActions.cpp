@@ -11,7 +11,7 @@
 #include "UserDefinedStructure/UserDefinedStructEditorData.h"
 #include "EditorAssetLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "StructUtils/UserDefinedStruct.h"
+#include "Engine/UserDefinedStruct.h"
 #include "Engine/UserDefinedEnum.h"
 #include "Engine/DataTable.h"
 #include "Engine/Blueprint.h"
@@ -669,7 +669,11 @@ FMonolithActionResult FMonolithBlueprintStructActions::HandleAddDataTableRow(con
 	}
 
 	// Add the row to the DataTable — uses the uint8*/UScriptStruct overload which copies internally
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	DataTable->AddRow(RowFName, *reinterpret_cast<const FTableRowBase*>(RowData));
+#else
 	DataTable->AddRow(RowFName, RowData, RowStruct);
+#endif
 
 	// Free our temporary copy
 	RowStruct->DestroyStruct(RowData);

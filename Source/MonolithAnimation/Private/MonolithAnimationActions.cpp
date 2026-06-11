@@ -12,6 +12,7 @@
 #include "Animation/Skeleton.h"
 #include "Animation/PreviewAssetAttachComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/SkinnedAssetCommon.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Rendering/SkeletalMeshRenderData.h"
 #include "AnimGraphNode_Base.h"
@@ -38,13 +39,20 @@
 #include "AnimationModifier.h"
 #include "Rig/IKRigDefinition.h"
 #include "Rig/IKRigSkeleton.h"
+#include "Rig/Solvers/IKRigSolver.h"
 #include "RigEditor/IKRigController.h"
 #include "Retargeter/IKRetargeter.h"
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 #include "Retargeter/IKRetargetChainMapping.h"
+#endif
 #include "RetargetEditor/IKRetargeterController.h"
 #include "RetargetEditor/IKRetargetBatchOperation.h" // batch_retarget_animations — RunRetarget + FIKRetargetBatchOperationContext
 #include "EditorAnimUtils.h"                          // EditorAnimUtils::FNameDuplicationRule (output folder + rename rule)
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+#include "ControlRigBlueprint.h"
+#else
 #include "ControlRigBlueprintLegacy.h"
+#endif
 #include "Rigs/RigHierarchy.h"
 #include "Rigs/RigHierarchyElements.h"
 #include "Rigs/RigHierarchyDefines.h"
@@ -75,10 +83,15 @@
 #include "Kismet2/CompilerResultsLog.h"   // compile + error harvest on rule authoring
 #include "Logging/TokenizedMessage.h"     // EMessageSeverity for harvested compiler messages
 #include "PhysicsEngine/PhysicsAsset.h"
-#include "PhysicsEngine/SkeletalBodySetup.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "PhysicsEngine/PhysicsConstraintTemplate.h"
 #include "PhysicsEngine/BodyInstance.h"
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+#define MONOLITH_ANIM_GRAPH_LOCATION(X, Y) FVector2D((X), (Y))
+#else
+#define MONOLITH_ANIM_GRAPH_LOCATION(X, Y) FVector2f((X), (Y))
+#endif
 
 #if WITH_CHOOSER
 // Phase-2 read-only recursive chooser-tree collector (same module, MonolithAnimation).
@@ -4798,19 +4811,32 @@ FMonolithActionResult FMonolithAnimationActions::HandleGetIKRigInfo(const TShare
 	// Solvers
 	TArray<TSharedPtr<FJsonValue>> SolversArr;
 	const int32 NumSolvers = C->GetNumSolvers();
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
 	const TArray<FInstancedStruct>& SolverStructs = Asset->GetSolverStructs();
+#endif
 	for (int32 i = 0; i < NumSolvers; ++i)
 	{
 		TSharedPtr<FJsonObject> SolverObj = MakeShared<FJsonObject>();
 		SolverObj->SetNumberField(TEXT("index"), i);
 		SolverObj->SetBoolField(TEXT("enabled"), C->GetSolverEnabled(i));
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		SolverObj->SetStringField(TEXT("start_bone"), C->GetRootBone(i).ToString());
+#else
 		SolverObj->SetStringField(TEXT("start_bone"), C->GetStartBone(i).ToString());
+#endif
 
 		FString TypeName = TEXT("Unknown");
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		if (UIKRigSolver* Solver = C->GetSolverAtIndex(i))
+		{
+			TypeName = Solver->GetClass()->GetName();
+		}
+#else
 		if (SolverStructs.IsValidIndex(i) && SolverStructs[i].GetScriptStruct())
 		{
 			TypeName = SolverStructs[i].GetScriptStruct()->GetName();
 		}
+#endif
 		SolverObj->SetStringField(TEXT("type"), TypeName);
 		SolverObj->SetStringField(TEXT("label"), C->GetSolverUniqueName(i));
 		SolversArr.Add(MakeShared<FJsonValueObject>(SolverObj));
@@ -4868,7 +4894,16 @@ FMonolithActionResult FMonolithAnimationActions::HandleAddIKSolver(const TShared
 		SolverType = FString::Printf(TEXT("/Script/IKRig.%s"), *SolverType);
 	}
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	TSubclassOf<UIKRigSolver> SolverClass = LoadClass<UIKRigSolver>(nullptr, *SolverType);
+	if (!SolverClass)
+	{
+		return FMonolithActionResult::Error(FString::Printf(TEXT("Failed to load solver class '%s'"), *SolverType));
+	}
+	int32 SolverIdx = C->AddSolver(SolverClass);
+#else
 	int32 SolverIdx = C->AddSolver(SolverType);
+#endif
 	if (SolverIdx < 0)
 	{
 		return FMonolithActionResult::Error(FString::Printf(TEXT("Failed to add solver of type '%s' — check type name"), *SolverType));
@@ -4879,7 +4914,11 @@ FMonolithActionResult FMonolithAnimationActions::HandleAddIKSolver(const TShared
 	bool bStartBoneSet = false;
 	if (Params->TryGetStringField(TEXT("root_bone"), RootBone) && !RootBone.IsEmpty())
 	{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		bStartBoneSet = C->SetRootBone(FName(*RootBone), SolverIdx);
+#else
 		bStartBoneSet = C->SetStartBone(FName(*RootBone), SolverIdx);
+#endif
 	}
 
 	// Optional goals array
@@ -5284,7 +5323,7 @@ FMonolithActionResult FMonolithAnimationActions::HandleAddStateToMachine(const T
 	UAnimStateNode* NewNode = FEdGraphSchemaAction_NewStateNode::SpawnNodeFromTemplate<UAnimStateNode>(
 		SMGraph,
 		NewObject<UAnimStateNode>(SMGraph),
-		FVector2f(static_cast<float>(PosX), static_cast<float>(PosY)),
+		MONOLITH_ANIM_GRAPH_LOCATION(static_cast<float>(PosX), static_cast<float>(PosY)),
 		/*bSelectNewNode=*/false);
 
 	if (!NewNode)
@@ -6136,7 +6175,7 @@ static UAnimGraphNode_StateMachine* SpawnStateMachineNode(UEdGraph* AnimGraph, c
 	UAnimGraphNode_StateMachine* SMNode = FEdGraphSchemaAction_NewStateNode::SpawnNodeFromTemplate<UAnimGraphNode_StateMachine>(
 		AnimGraph,
 		NewObject<UAnimGraphNode_StateMachine>(AnimGraph),
-		FVector2f(static_cast<float>(PosX), static_cast<float>(PosY)),
+		MONOLITH_ANIM_GRAPH_LOCATION(static_cast<float>(PosX), static_cast<float>(PosY)),
 		/*bSelectNewNode=*/false);
 
 	if (!SMNode || !SMNode->EditorStateMachineGraph)
@@ -6244,7 +6283,7 @@ static UAnimStateNode* BuilderAddState(UAnimationStateMachineGraph* SMGraph, con
 	UAnimStateNode* NewNode = FEdGraphSchemaAction_NewStateNode::SpawnNodeFromTemplate<UAnimStateNode>(
 		SMGraph,
 		NewObject<UAnimStateNode>(SMGraph),
-		FVector2f(0.0f, 0.0f),
+		MONOLITH_ANIM_GRAPH_LOCATION(0.0f, 0.0f),
 		/*bSelectNewNode=*/false);
 	if (!NewNode || !NewNode->BoundGraph) return nullptr;
 
@@ -6287,6 +6326,27 @@ static bool BuilderSetStateAnimation(UAnimStateNode* StateNode, UAnimSequenceBas
 
 	const UEdGraphSchema* Schema = StateGraph->GetSchema();
 	return Schema ? Schema->TryCreateConnection(OutputPosePin, PoseSinkPin) : false;
+}
+
+static UEdGraphPin* GetStateEntryOutputPin(UAnimStateEntryNode* EntryNode)
+{
+	if (!EntryNode)
+	{
+		return nullptr;
+	}
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	for (UEdGraphPin* Pin : EntryNode->Pins)
+	{
+		if (Pin && Pin->Direction == EGPD_Output)
+		{
+			return Pin;
+		}
+	}
+	return nullptr;
+#else
+	return EntryNode->GetOutputPin();
+#endif
 }
 
 FMonolithActionResult FMonolithAnimationActions::HandleBuildStateMachine(const TSharedPtr<FJsonObject>& Params)
@@ -6406,7 +6466,7 @@ FMonolithActionResult FMonolithAnimationActions::HandleBuildStateMachine(const T
 		}
 		if (EntryTarget && EntryNode)
 		{
-			UEdGraphPin* EntryOut = EntryNode->GetOutputPin();
+			UEdGraphPin* EntryOut = GetStateEntryOutputPin(EntryNode);
 			UEdGraphPin* StateIn  = EntryTarget->GetInputPin();
 			const UAnimationStateMachineSchema* Schema = Cast<UAnimationStateMachineSchema>(SMGraph->GetSchema());
 			if (EntryOut && StateIn && Schema)
@@ -9130,12 +9190,15 @@ static int32 SeedRetargeterDefaultOps(UIKRetargeterController* C, EAutoMapChainT
 	// Add the default op set (Pelvis Motion, FK Chains, Run IK Rig, IK Chains,
 	// Root Motion, Curve Remap) if not already present, and run each op's initial
 	// setup so chain mappings are reinitialized against the assigned rigs.
-	C->AddDefaultOps();
-
 	// Auto-map the source->target retarget chains on every op that has a chain
 	// mapping (FK/IK chains ops). Without a chain mapping there is nothing for
 	// RunRetarget to transfer. bForceRemap=true so a re-seed re-maps cleanly.
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+	C->AutoMapChains(AutoMapType, /*bForceRemap=*/true);
+#else
+	C->AddDefaultOps();
 	C->AutoMapChains(AutoMapType, /*bForceRemap=*/true, /*InOpName=*/NAME_None);
+#endif
 
 	return C->GetNumRetargetOps();
 }
@@ -9545,8 +9608,13 @@ FMonolithActionResult FMonolithAnimationActions::HandleCopyBonePoseBetweenSequen
 		// uses the raw track if present and falls back to the skeleton's ref pose
 		// if the bone has no track — which is exactly what we want.
 		FTransform BoneXform = FTransform::Identity;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		SourceSeq->GetBoneTransform(BoneXform, FSkeletonPoseBoneIndex(SourceBoneIdx),
+		                            static_cast<double>(SourceTime), /*bUseRawData=*/true);
+#else
 		SourceSeq->GetBoneTransform(BoneXform, FSkeletonPoseBoneIndex(SourceBoneIdx),
 		                            FAnimExtractContext(SourceTime), /*bUseRawData=*/true);
+#endif
 
 		// Build per-frame arrays for dest. For a static pose, all frames share
 		// the same value; otherwise only frame 0 is set.

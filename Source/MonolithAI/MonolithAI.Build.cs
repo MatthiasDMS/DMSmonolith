@@ -24,6 +24,11 @@ public class MonolithAI : ModuleRules
 			"SQLiteCore"
 		});
 
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			PrivateDependencyModuleNames.Add("StructUtils");
+		}
+
 		// --- Conditional optional deps ---
 		// MONOLITH_RELEASE_BUILD=1 forces all optional plugin deps OFF so binary
 		// release zips never hard-link against plugins the end-user may not have
@@ -77,6 +82,10 @@ public class MonolithAI : ModuleRules
 				}
 			}
 		}
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			bHasStateTree = false;
+		}
 
 		if (bHasStateTree)
 		{
@@ -120,6 +129,10 @@ public class MonolithAI : ModuleRules
 						Path.Combine(ProjectPluginsDir, "SmartObjects"));
 				}
 			}
+		}
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			bHasSmartObjects = false;
 		}
 
 		if (bHasSmartObjects)
@@ -234,6 +247,10 @@ public class MonolithAI : ModuleRules
 					break;
 				}
 			}
+		}
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			bHasMassEntity = false;
 		}
 
 		if (bHasMassEntity)

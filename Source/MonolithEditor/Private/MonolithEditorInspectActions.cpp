@@ -38,7 +38,7 @@
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "Materials/MaterialParameters.h"
+#include "MaterialTypes.h"
 
 #include "Engine/Texture.h"
 #include "Engine/Texture2D.h"

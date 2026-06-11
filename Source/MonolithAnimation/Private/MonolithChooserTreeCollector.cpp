@@ -11,7 +11,7 @@
 #include "ObjectChooser_Asset.h"      // FAssetChooser / FSoftAssetChooser
 #include "OutputObjectColumn.h"        // FOutputObjectColumn / FChooserOutputObjectRowData
 
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 #include "UObject/SoftObjectPtr.h"
 #include "UObject/SoftObjectPath.h"
 

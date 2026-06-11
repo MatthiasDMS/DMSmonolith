@@ -526,9 +526,15 @@ FMonolithActionResult FMonolithBlueprintDataTableActions::HandleSetDataTableRows
 		// by WriteTree's bWouldApply). Otherwise free the buffer without writing.
 		if (!bDryRun && RowReport.bWouldApply)
 		{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+			// UE 5.4 lacks the public raw-row overload, but AddRow still copies via
+			// the table's active RowStruct internally.
+			DataTable->AddRow(RowFName, *reinterpret_cast<const FTableRowBase*>(RowData));
+#else
 			// uint8*/UScriptStruct overload copies internally and is safe for any
 			// row struct (including UserDefinedStructs that do not derive FTableRowBase).
 			DataTable->AddRow(RowFName, RowData, RowStruct);
+#endif
 			ChangedRows.Add(RowFName);
 		}
 

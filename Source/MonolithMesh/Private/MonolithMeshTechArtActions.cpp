@@ -875,7 +875,11 @@ FMonolithActionResult FMonolithMeshTechArtActions::AnalyzeTexelDensity(const TSh
 				if (MatInterface)
 				{
 					TArray<UTexture*> UsedTextures;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+					MatInterface->GetUsedTextures(UsedTextures, EMaterialQualityLevel::High, false, ERHIFeatureLevel::SM5, false);
+#else
 					MatInterface->GetUsedTextures(UsedTextures, EMaterialQualityLevel::High);
+#endif
 					if (UsedTextures.Num() > 0 && UsedTextures[0])
 					{
 						TextureRes = FMath::Max(UsedTextures[0]->GetSurfaceWidth(), UsedTextures[0]->GetSurfaceHeight());
@@ -1052,7 +1056,11 @@ FMonolithActionResult FMonolithMeshTechArtActions::AnalyzeMaterialCostInRegion(c
 					// Count used textures as a cost proxy — always available and correlates with
 					// shader complexity. Texture fetches are a major GPU cost driver.
 					TArray<UTexture*> Textures;
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+					MatInterface->GetUsedTextures(Textures, EMaterialQualityLevel::High, false, ERHIFeatureLevel::SM5, false);
+#else
 					MatInterface->GetUsedTextures(Textures, EMaterialQualityLevel::High);
+#endif
 					int32 TextureCount = Textures.Num();
 
 					// Also count the number of material expressions as a complexity metric

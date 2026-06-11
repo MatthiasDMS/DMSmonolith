@@ -51,7 +51,7 @@
 #include "SmartObjectDefinition.h"
 #include "SmartObjectComponent.h"
 #include "SmartObjectRequestTypes.h"
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 #endif
 
 // ============================================================

@@ -52,6 +52,11 @@ public class MonolithIndex : ModuleRules
 				|| Directory.GetDirectories(EnginePluginsDir, "Metasound", SearchOption.TopDirectoryOnly).Length > 0;
 		}
 
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			bHasMetasound = false;
+		}
+
 		if (bHasMetasound)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] { "MetasoundEngine", "MetasoundFrontend" });

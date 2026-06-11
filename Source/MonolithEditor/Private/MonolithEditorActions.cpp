@@ -3885,13 +3885,18 @@ namespace MonolithAutomationDetail
 		// Default RequestedTestFilter is SmokeFilter only (UE constructor default), which
 		// excludes most game-module tests. Widen to all filter buckets so any registered
 		// test the caller's prefix points at is eligible. Restore on scope exit.
-		const EAutomationTestFlags AllFilters = static_cast<EAutomationTestFlags>(
+		const uint32 AllFilterBits =
 			static_cast<uint32>(EAutomationTestFlags::SmokeFilter) |
 			static_cast<uint32>(EAutomationTestFlags::EngineFilter) |
 			static_cast<uint32>(EAutomationTestFlags::ProductFilter) |
 			static_cast<uint32>(EAutomationTestFlags::PerfFilter) |
 			static_cast<uint32>(EAutomationTestFlags::StressFilter) |
-			static_cast<uint32>(EAutomationTestFlags::NegativeFilter));
+			static_cast<uint32>(EAutomationTestFlags::NegativeFilter);
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		const uint32 AllFilters = AllFilterBits;
+#else
+		const EAutomationTestFlags AllFilters = static_cast<EAutomationTestFlags>(AllFilterBits);
+#endif
 		// No public getter for the previous filter, so just set ours and leave it.
 		// Subsequent test runs in the same session pick up this widened filter, which
 		// is harmless (other tools will set their own when they need it).

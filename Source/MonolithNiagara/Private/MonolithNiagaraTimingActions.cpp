@@ -967,7 +967,11 @@ FMonolithActionResult FMonolithNiagaraTimingActions::HandleSetEmitterLoopProfile
 	// not on our include path; we route via GetEmitterBase() to get a UObject*).
 	if (Handles[EIdx].GetStatelessEmitter() != nullptr)
 	{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+		UObject* StatelessEmitter = reinterpret_cast<UObject*>(Handles[EIdx].GetStatelessEmitter());
+#else
 		UObject* StatelessEmitter = Handles[EIdx].GetEmitterBase();
+#endif
 		TArray<TSharedPtr<FJsonValue>> StatelessWarnings;
 		return WriteStatelessLoopProfile(StatelessEmitter, Params, StatelessWarnings);
 	}
@@ -1137,8 +1141,13 @@ FMonolithActionResult FMonolithNiagaraTimingActions::HandleGetEmitterTimingSumma
 		// so the helper's defaults (own name, index=0) don't leak through.
 		if (H.GetStatelessEmitter() != nullptr)
 		{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+			TSharedPtr<FJsonObject> StatelessObj =
+				ReadStatelessLoopProfile(reinterpret_cast<UObject*>(H.GetStatelessEmitter()));
+#else
 			TSharedPtr<FJsonObject> StatelessObj =
 				ReadStatelessLoopProfile(H.GetEmitterBase());
+#endif
 			StatelessObj->SetStringField(TEXT("name"), HandleName);
 			StatelessObj->SetNumberField(TEXT("index"), i);
 			EmittersArr.Add(MakeShared<FJsonValueObject>(StatelessObj.ToSharedRef()));

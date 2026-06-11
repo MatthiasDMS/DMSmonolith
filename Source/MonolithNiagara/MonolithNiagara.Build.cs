@@ -22,6 +22,8 @@ public class MonolithNiagara : ModuleRules
 			"NiagaraCore",
 			"NiagaraEditor",
 			"NiagaraShader",
+			"Sequencer",
+			"SequencerCore",
 			"Json",
 			"JsonUtilities",
 			"AssetTools",
@@ -42,7 +44,8 @@ public class MonolithNiagara : ModuleRules
 		// $LeakSentinels (that list is for OPTIONAL-plugin deps with no guaranteed load order; this
 		// is engine-private source of an already-hard-dep module, gated OFF in release builds).
 		bool bReleaseBuild = System.Environment.GetEnvironmentVariable("MONOLITH_RELEASE_BUILD") == "1";
-		if (bReleaseBuild)
+		bool bLegacyNiagaraEditor = Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4;
+		if (bReleaseBuild || bLegacyNiagaraEditor)
 		{
 			PublicDefinitions.Add("WITH_NIAGARA_WIZARD_PRIVATE=0");
 		}

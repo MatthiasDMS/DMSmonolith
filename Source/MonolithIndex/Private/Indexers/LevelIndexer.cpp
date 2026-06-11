@@ -327,6 +327,6 @@ FString FLevelIndexer::SerializeComponents(const AActor* Actor)
 
 	FString Result;
 	auto Writer = TJsonWriterFactory<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>::Create(&Result);
-	FJsonSerializer::Serialize(CompArray, *Writer);
+	FJsonSerializer::Serialize(CompArray, *Writer, true);
 	return Result;
 }

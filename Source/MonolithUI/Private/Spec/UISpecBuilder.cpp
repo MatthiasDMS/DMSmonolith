@@ -987,7 +987,9 @@ FUISpecBuilderResult FUISpecBuilder::Build(const FUISpecBuilderInputs& Inputs)
                     REN_DoNotDirty | REN_DontCreateRedirectors | REN_ForceNoResetLoaders);
             }
             WBP->WidgetTree->RootWidget = nullptr;
+#if !(ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4)
             WBP->WidgetVariableNameToGuidMap.Empty();
+#endif
         }
     }
 

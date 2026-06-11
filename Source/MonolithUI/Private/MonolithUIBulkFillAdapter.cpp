@@ -255,7 +255,11 @@ namespace MonolithUIBulkFillInternal
 
 		if (!Spec.bDryRun && FieldErrors == 0)
 		{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 4
+			DT->AddRow(FName(*RowName), *reinterpret_cast<const FTableRowBase*>(RowData));
+#else
 			DT->AddRow(FName(*RowName), reinterpret_cast<const uint8*>(RowData), RowStruct);
+#endif
 			RowWrite.bOk = true;
 		}
 		else if (Spec.bDryRun)

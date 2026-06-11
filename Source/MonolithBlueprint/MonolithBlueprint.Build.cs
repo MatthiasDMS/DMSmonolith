@@ -30,5 +30,10 @@ public class MonolithBlueprint : ModuleRules
 			// since UE 5.5 — FInstancedStruct relocated into CoreUObject and resolves
 			// transparently via the existing CoreUObject Public dep above.)
 		});
+
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion <= 4)
+		{
+			PrivateDependencyModuleNames.Add("StructUtils");
+		}
 	}
 }

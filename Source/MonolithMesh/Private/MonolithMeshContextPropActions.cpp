@@ -862,7 +862,7 @@ FMonolithActionResult FMonolithMeshContextPropActions::SetRoomDisturbance(const 
 		if (RandStream.FRand() < Config.OnFloorPercent * SizeMultiplier)
 		{
 			// Trace to find the floor
-			FloorTraceParams.ClearIgnoredSourceObjects();
+			FloorTraceParams.ClearIgnoredActors();
 			FloorTraceParams.AddIgnoredActor(Actor);
 
 			FHitResult FloorHit;
@@ -1130,7 +1130,7 @@ FMonolithActionResult FMonolithMeshContextPropActions::SettleProps(const TShared
 
 	for (AActor* Actor : Targets)
 	{
-		TraceParams.ClearIgnoredSourceObjects();
+		TraceParams.ClearIgnoredActors();
 		TraceParams.AddIgnoredActor(Actor);
 
 		FVector ActorOrigin, ActorExtent;
